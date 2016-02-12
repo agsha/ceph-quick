@@ -1,0 +1,34 @@
+{
+    "adm": [
+        {%for host in groups["adm"]%}
+      "{{host}}"
+      {% if not loop.last %}
+              ,
+      {% endif %}
+    {%endfor%}],
+
+    "rgws" : [
+    {%for host in groups["rgws"]%}
+      "{{host}}"
+      {% if not loop.last %}
+              ,
+      {% endif %}
+    {%endfor%}],
+
+    "mons" : [
+    {%for host in groups["mons"]%}
+      "{{host}}"
+      {% if not loop.last %}
+              ,
+      {% endif %}
+    {%endfor%}],
+
+    "osds" : [
+    {%for host in groups["osds"]%}
+      "{{host}}"
+      {% if not loop.last %}
+              ,
+      {% endif %}
+    {%endfor%}]
+
+}

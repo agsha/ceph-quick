@@ -1,0 +1,54 @@
+# collect info from hosts
+- hosts: all
+  sudo: True
+  tasks:
+  - copy: src=scripts/collect.py dest=/tmp/collect.py
+  - command: sudo python /tmp/collect.py collect_data /tmp/{{inventory_hostname}}.data
+  - fetch: src=/tmp/{{inventory_hostname}}.data dest=fetch/{{inventory_hostname}}.data flat=yes
+#
+# generate config files
+- hosts: adm
+  sudo: True
+  gather_facts: False
+  tasks:
+  - name: Install pip
+    action: apt pkg={{item}} state=installed
+    with_items:
+       - python-pip
+       - python-dev
+       - build-essential
+  - copy: src=fetch dest=/tmp
+  - copy: src=scripts/adm.py dest=/tmp
+  - copy: src=templates/ceph.conf.j2 dest=/tmp
+  - template: src=templates/host_info.json.j2 dest=/tmp/host_info.json
+  - command: sudo python /tmp/adm.py gen
+  - fetch: src=/tmp/ceph/ceph.client.admin.keyring dest=ceph/ceph.client.admin.keyring flat=True
+  - fetch: src=/tmp/ceph/fsid dest=ceph/fsid flat=True
+  - fetch: src=/tmp/ceph/ceph.conf dest=ceph/ceph.conf flat=True
+
+#setup mon
+- hosts: mons
+  sudo: True
+  gather_facts: False
+  tasks:
+  - copy: src=ceph/ dest=/tmp/
+  - copy: src=scripts/mon.py dest=/tmp/
+  - command: sudo python /tmp/mon.py gen ceph
+
+#setup osd
+- hosts: osds
+  sudo: True
+  gather_facts: False
+  tasks:
+  - copy: src=ceph/ dest=/tmp/
+  - copy: src=scripts/osd.py dest=/tmp/
+  - command: sudo python /tmp/osd.py gen ceph
+
+# set the crush map
+#- hosts: adm
+#  sudo: True
+#  gather_facts: False
+#  tasks:
+#  - copy: src=scripts/adm.py dest=/tmp
+#  - copy: src=templates/crush_map.j2 dest=/tmp/
+#  - command: sudo python /tmp/adm.py crush
